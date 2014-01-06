@@ -8,13 +8,13 @@
         <table>
             <tr>
                 <td>
-                    <input type="text" name="merchant" placeholder="Merchant">
-                </td>
-                <td>
                     <input type="text" name="amount" placeholder="Amount">
                 </td>
                 <td>
-                    <textarea name="comments" placeholder="Transaction comments..." rows="1" cols="50"></textarea>
+                    <input type="text" name="merchant" placeholder="Merchant">
+                </td>
+                <td>
+                    <input type="text "name="comments" placeholder="Transaction comments...">
                 </td>
                 <td>
                     <input type="submit" value="Add">
