@@ -1,5 +1,9 @@
-// creates a (session) cookie
-var createCookie = function (cookie_name,value,hours) {
+// function creates a cookie
+// Parameters:
+//      cookie_name - name of the cookie to be deleted
+//      value - value to be assigned to the cookie
+//      hours - integer number of hours before expiration
+var createCookie = function (cookie_name, value, hours) {
     var expires;
     if (hours) {
         var date = new Date();
@@ -11,8 +15,9 @@ var createCookie = function (cookie_name,value,hours) {
     }
     document.cookie = cookie_name+"="+value+expires+"; path=/";
 };
-// get the value of a cookie if it exists
-// otherwise return null
+// get the value of a cookie if it exists otherwise return null
+// Parameters:
+//      cookie_name - name of the cookie to be deleted
 var getCookieValue = function (cookie_name) {
     // add '=' so we get the value when we
     // find the cookies
@@ -34,15 +39,19 @@ var getCookieValue = function (cookie_name) {
     // otherwise return null
     return null;
 };
-// resets cookie to have expired an hour ago
+// function resets cookie to have expired an hour ago
 // causing the browser to delete the cookie altogether
+// Parameters:
+//      cookie_name - name of the cookie to be deleted
 var deleteCookie = function (cookie_name) {
     createCookie(cookie_name, "", -1);
 };
+// function logs out the user
 var logoutUser = function (){
     deleteCookie("authToken");
     location.reload(true);
 };
+// function alerts user of server error
 var serverError = function (){
     alert("Expensify failed due to a server error. Refresh and try again.");
 };
@@ -54,11 +63,18 @@ var defaultStatusObject = {
     502: serverError,
     503: serverError
 };
+// function adds downloaded transaction to the transactions table
+// function has parameters corresponding to the data needed to add
+// Parameters:
+//      transaction - the transaction object that contains the
+//          the transaction data fetched from Expensify
+//      table - the table element that displays user transactions
 var addTransaction = function (transaction, table) {
     var row = document.createElement("tr");
     table.appendChild(row);
     var date_cell = document.createElement("td");
     date_cell.innerHTML = transaction.created;
+    row.appendChild(date_cell);
     var amount_cell = document.createElement("td");
     amount_cell.innerHTML = transaction.amount;
     row.appendChild(amount_cell);
@@ -73,13 +89,14 @@ var addTransaction = function (transaction, table) {
 // function attaches handlers for the creation of new transactions
 // function has parameters corresponding to DOM elements involved
 // in the creation of a new transaction
-//      table: the table element that contains transactions data
-//      form: the form which users submit to add new transaction
+// Parameters
+//      table - the table element that contains transactions data
+//      form - the form which users submit to add new transaction
 //          data to the table
-//      date: the hidden input which is to contain the date of
+//      date - the hidden input which is to contain the date of
 //          creation of new transaction
-//      add: the button which submits transaction data
-//      cancel: button which cancels user input
+//      add - the button which submits transaction data
+//      cancel - button which cancels user input
 var addNewTransactionHandlers = function (table, form, add, cancel) {
     $(add).on("click", function (event) {
         add.style.display = "none";
@@ -106,6 +123,11 @@ var addNewTransactionHandlers = function (table, form, add, cancel) {
         return false;
     });
 };
+// function gets user transaction data from Expensify via
+// via the API and displays those transactions in a table
+// Parameters:
+//      table - the table element that is to contain
+//          transaction data
 var getUserTransactions = function (table) {
     $.ajax({
         dataType: "json",
@@ -120,6 +142,19 @@ var getUserTransactions = function (table) {
         statusCode: defaultStatusObject,
     });
 };
+// function configures the user's personal transaction
+// dashboard. parameters correspond to elements involved
+// in the configuration of users personal dashboard
+// Parameters:
+//      nav - nav element that contains navigation items
+//      nav_username - inline element that contains users
+//          email address
+//      nav_logout - inline element that acts as log out button
+//      login_con - container of login form
+//      trans_con - container of transaction elements
+//      trans_form - form for adding transactions
+//      trans_add - button for submission of new transaction data
+//      trans_cancel - inline element that cancels transaction on click
 var configUser = function (nav, nav_username, nav_logout, login_con,
         trans_con, trans_table, trans_form, trans_add, trans_cancel) {
     // remove login form

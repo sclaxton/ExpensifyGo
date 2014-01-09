@@ -44,7 +44,8 @@ if ($_GET['command']){
         $authToken = $_COOKIE['authToken'];
         $qs = $qs . "&authToken=" . $authToken;
         $api_url = $api_url . $qs;
-        proxyRequest($api_url);
+        echo $api_url;
+        // proxyRequest($api_url);
     }
 }
 ?>
