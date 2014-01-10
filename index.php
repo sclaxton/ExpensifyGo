@@ -1,5 +1,4 @@
-<?php $authToken = $_COOKIE["authToken"]; ?>
-<!DOCTYPE HTML>
+<!DOCTYPE html>
 <html>
     <head>
         <meta charset="utf-8">
@@ -16,18 +15,12 @@
         </div>
         <div id="content">
             <nav  style="display:none;">
-                <span id="username"></span><a id="logout">logout</a>
+                <span id="username"></span><button type="button" id="logout">logout</button>
             </nav>
         <?php
-            $display = "";
-            if (!$authToken){
-                $display = "display:none;";
-            }
             require_once 'login.php';
-            echo '<div id="trans_con" style=' . $display . '>';
-                require_once 'content.php';
+            require_once 'content.php';
         ?>
-            </div>
         </div>
     </body>
 </html>
