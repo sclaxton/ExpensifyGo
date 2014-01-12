@@ -92,6 +92,7 @@ function Form(formElmt, errorElmt){
 // class method that ajaxify's form submission on a form
 Form.prototype.ajaxifySubmit = function(responseHandler) {
     var self = this;
+    console.log(this);
     var url = self.formElmt.action;
     $(self.formElmt).submit(function(event){
         var params = $(self.formElmt).serialize();
@@ -218,7 +219,7 @@ function Transactions(Table, Adder){
 //          that displays transactions
 function Table(AppTools){
     var tableElmt = document.getElementById("trans_table");
-    var formElmt = document.getElementById("trans_form");
+    var formElmt = document.getElementById("show_form");
     var form = new Form(formElmt, null);
     var showAllButtonELmt = document.getElementById("show_all");
     function clearTable(){
@@ -230,7 +231,7 @@ function Table(AppTools){
     //          transaction data
     //      table -- DOM table element that displays
     //          transaction data
-    function addTransaction(transaction, table){
+    function addTransaction(table, transaction){
         var row = document.createElement("tr");
         table.appendChild(row);
         var date_cell = document.createElement("td");
@@ -253,10 +254,10 @@ function Table(AppTools){
     //      response -- object populated with transaction
     //          objects
     function formSuccessHandler(response){
+        var transactions = response.transactionList;
+        console.log(transactions);
         clearTable();
-        for (var transaction in response){
-            addTransaction(transaction, tableElmt);
-        }
+        transactions.forEach(addTransaction.bind(undefined, tableElmt));
     }
     // this form handles both success and error responses from the API
     var formHandler = AppTools.formHandler(formSuccessHandler);
@@ -313,12 +314,12 @@ function  Adder(AppTools){
 //      of the application that comprises and
 //      handles the navigation bar
 function NavBar(AppTools){
-    var username = getCookieValue("email");
     var navElmt = document.getElementsByTagName("nav")[0];
-    var usernameElmt = document.getElementById("logout");
-    var logoutButton = document.getElementById("username");
+    var usernameElmt = document.getElementById("username");
+    var logoutButton = document.getElementById("logout");
     var logoutButtonBehavior = AppTools.logoutUser;
-    function configNavBar(){
+    function configNavBar(email){
+        var username = email || getCookieValue("email");
         navElmt.style.display = "";
         usernameElmt.innerHTML = username;
         $(logoutButton).on("click", logoutButtonBehavior);
@@ -340,11 +341,13 @@ function Login(Transactions, NavBar, AppTools){
     function formSuccessHandler(response) {
         $(containerElmt).remove();
         Transactions.show();
+        var email;
         if(response){
-            createCookie("email", response.email, 1);
+            email = response.email;
+            createCookie("email", email, 1);
             createCookie("authToken", response.authToken, 1);
         }
-        NavBar.congfig();
+        NavBar.config(email);
         Transactions.Table.config();
         Transactions.Adder.config();
     }
@@ -365,14 +368,14 @@ function Login(Transactions, NavBar, AppTools){
 $(document).ready(function (){
     var authToken = getCookieValue("authToken");
     // load up modules
-    var AppTools = AppTools();
-    var Transactions = Transactions( Table(AppTools), Adder(AppTools));
-    var NavBar = NavBar(AppTools);
-    var Login = Login(Transactions, NavBar, AppTools);
+    var apptools = AppTools();
+    var transactions = Transactions( Table(apptools), Adder(apptools));
+    var navbar = NavBar(apptools);
+    var login = Login(transactions, navbar, apptools);
     if (!authToken){
-        Login.config();
+        login.config();
     }
     else {
-        Login.success();
+        login.success();
     }
 });
