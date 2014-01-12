@@ -3,70 +3,32 @@
 /////////////////////////////////////////////////
 
 // function that makes an ajax call to the expensify API
-var ajaxExpensify = function(url, params, successHandler, jsonErrorCodeObject){
+function ajaxJSON(url, params, callback){
     $.ajax({
         dataType: "json",
-        url: this.formElmt.action,
-        data: $(this.formElmt).serialize(),
+        url: url,
+        data: params,
         success: function(data){
-            if (data.jsonCode == "200"){
-                successHandler(data);
-            }
-            else {
-                jsonErrorCodeObject[data.jsonCode](data, errorElmt);
-            }
+            callback(data);
         },
         error: function(jqXHR, clientStatus, httpStatus){
             if (clientStatus){
                 console.log(clientStatus);
-                alert("Uh oh! An exception occured: " + clientStatus);
+                alert("Uh oh! An exception occured.");
             }
-            if (httpStatus) {
+            else if (httpStatus) {
                 alert("Uh oh! A server error occurred: " + httpStatus + ". Try again later.");
             }
         },
     });
-};
-
-// function checks if object has any unset properties
-// i.e. checks if object has any properties with a
-// null value
-// Parameters:
-//      target -- the object to be checked
-// Returns:
-//      String -- the (first) unset property if it exists
-//      false -- if the object has no unset property
-var illDefined = function (target) {
-    for (var member in target) {
-        if (target[member] === null)
-            return member;
-        }
-    return false;
-};
-
-// function checks if target is defined and if so
-// calls a call, if not it throws an error with a
-// message about the undefined property
-// Parameters:
-//      target -- the object to be checked
-//      callback -- the function to be called
-//          if the object is well defined
-var ifWellDefinedThen = function (target, callback){
-    var isIllDefined = illDefined(target);
-    if(isIllDefined === false){
-        callback();
-    }
-    else {
-        throw new Error("The following property is not defined: " + isIllDefined);
-    }
-};
+}
 
 // function creates a cookie
 // Parameters:
 //      cookie_name -- name of the cookie to be deleted
 //      value -- value to be assigned to the cookie
 //      hours -- integer number of hours before expiration
-var createCookie = function (cookie_name, value, hours) {
+function createCookie(cookie_name, value, hours) {
     var expires;
     if (hours) {
         var date = new Date();
@@ -77,13 +39,13 @@ var createCookie = function (cookie_name, value, hours) {
         expires = "";
     }
     document.cookie = cookie_name+"="+value+expires+"; path=/";
-};
+}
 
 // function gets the value of a cookie if it exists
 // otherwise return null
 // Parameters:
 //      cookie_name -- name of the cookie to be deleted
-var getCookieValue = function (cookie_name) {
+function getCookieValue(cookie_name) {
     // add '=' so we get the value when we
     // find the cookies
     var cookie_name_eq = cookie_name + "=";
@@ -103,21 +65,22 @@ var getCookieValue = function (cookie_name) {
     }
     // otherwise return null
     return null;
-};
+}
 
 // function resets cookie to have expired an hour ago
 // causing the browser to delete the cookie altogether
 // Parameters:
 //      cookie_name -- name of the cookie to be deleted
-var deleteCookie = function (cookie_name) {
+function deleteCookie(cookie_name) {
     createCookie(cookie_name, "", -1);
-};
+}
 
 
 /////////////////////////////////////////////////
 // Classes //////////////////////////////////////
 /////////////////////////////////////////////////
 
+// this class abstracts DOM form elements
 function Form(formElmt, errorElmt){
     if (!(this instanceof Form)){
         return new Form(formElmt, errorElmt);
@@ -126,149 +89,148 @@ function Form(formElmt, errorElmt){
     this.errorElmt = errorElmt || null;
 }
 
-Form.prototype.ajaxifySubmit = function(successHandler, jsonErrorCodeObject) {
+// class method that ajaxify's form submission on a form
+Form.prototype.ajaxifySubmit = function(responseHandler) {
     var self = this;
     var url = self.formElmt.action;
-    var params = $(self.formElmt).serialize();
     $(self.formElmt).submit(function(event){
-        ajaxExpensify(url, params, successHandler, jsonErrorCodeObject);
+        var params = $(self.formElmt).serialize();
+        ajaxJSON(url, params, responseHandler);
+        return false;
     });
 };
 
-/////////////////////////////////////////////////
-// Helper Functions /////////////////////////////
-/////////////////////////////////////////////////
-
-var errorInvalidInput = function(){
-    alert("Invalid user input. Try again!");
-};
-
-var errorPrivileges = function(){
-    alert("Oops! You do not have the privileges to do that!");
-};
-
-var errorServer = function(){
-    alert("Oops! Expensify is experiencing some issues on their end. Try again later.");
-};
-
-// function logs out the user by deleting the
-// authentication cookie and refreshing the page
-// so that the cookie actually get removed by
-// the browser, this should also "redirect" to
-// the login "page"
-var logoutUser = function (){
-    deleteCookie("authToken");
-    location.reload(true);
-};
-
-// function that handles login json error codes
-// Parameters:
-//      error -- the error object return by the API call
-//      errorElmt -- the inline element to contain the error
-//          the login error message to be displayed
-var errorLogin = function(error, errorElmt){
-    errorElmt.innerHTML = error.message;
-};
-
-// object that handles the default set of json error codes
-var jsonCodeDefaultHandlers = {
-    // 400 unrecognized command
-    "400": errorInvalidInput,
-    // 402 missing argument
-    "402": errorInvalidInput,
-    // 407 malformed authToken
-    "407": logoutUser,
-    // 408 authToken expired
-    "408": logoutUser,
-    // 411 Insufficient privileges
-    "411": errorPrivileges,
-    // 500 Aborted
-    "500": errorServer,
-    // 501 db transaction error
-    "501": errorServer,
-    // 502 query error
-    "502": errorServer,
-    // query response error
-    "503": errorServer,
-    // unrecognized object state
-    "504": errorServer,
-};
-
-// object that handle the set of json error codes
-// specific to the Authenticate API command
-var loginErrorHandlers = {
-    // 401 incorrect password
-    "401": errorLogin,
-    // 404 account not found
-    "404": errorLogin,
-    // 405 email not validated
-    "405": errorLogin,
-};
-
-// object composed of login specific json errors
-// and the default set of json error codes
-var jsonCodeLoginErrorHandlers = $.extend(loginErrors, jsonDefaultHandlerObject);
-
 
 /////////////////////////////////////////////////
-// Abstractions of Application Structure ////////
+// Application Specific Code ////////////////////
 /////////////////////////////////////////////////
 
-// transaction -- object that abstracts
+// The application code is made up of modules that
+// encapsulate the functionalities and structure
+// of the apllication
+
+
+// AppTools -- module that encapsulates all
+//      application specific code used in other
+//      application modules
+function AppTools(){
+    function errorInvalidInput(){
+        alert("Invalid user input. Try again!");
+    }
+    function errorPrivileges(){
+        alert("Oops! You do not have the privileges to do that!");
+    }
+    function errorServer(){
+        alert("Oops! Expensify is experiencing some issues on their end. Try again later.");
+    }
+    // function logs out the user by deleting the
+    // authentication cookie and refreshing the page
+    // so that the cookie actually get removed by
+    // the browser, this should also "redirect" to
+    // the login "page"
+    function logoutUser(){
+        deleteCookie("authToken");
+        location.reload(true);
+    }
+    // function that handles login json error codes
+    // Parameters:
+    //      error -- the error object return by the API call
+    //      errorElmt -- the inline element to contain the error
+    //          the login error message to be displayed
+    function errorLogin(error, errorElmt){
+        errorElmt.innerHTML = error.message;
+    }
+    // object that handles the default set of json error codes
+    var errorCodeHandlers = {
+        // 400 unrecognized command
+        "400": errorInvalidInput,
+        // 401 incorrect password
+        "401": errorLogin,
+        // 402 missing argument
+        "402": errorInvalidInput,
+        // 404 account not found
+        "404": errorLogin,
+        // 405 email not validated
+        "405": errorLogin,
+        // 407 malformed authToken
+        "407": logoutUser,
+        // 408 authToken expired
+        "408": logoutUser,
+        // 411 Insufficient privileges
+        "411": errorPrivileges,
+        // 500 Aborted
+        "500": errorServer,
+        // 501 db transaction error
+        "501": errorServer,
+        // 502 query error
+        "502": errorServer,
+        // query response error
+        "503": errorServer,
+        // unrecognized object state
+        "504": errorServer,
+    };
+    // higher order function that takes in a callback for
+    // a successful ajax form submission and the optional
+    // argument of an element to display errors to
+    // function return a callback function that handles
+    // the json code errors specific to the expensify API
+    // Parameters:
+    //          successCallback -- callback to be called on
+    //              successful ajax form submission
+    //          errorElmt -- inline DOM element to display error
+    //              messages to
+    function expensifyFormHandler(successCallback, errorElmt){
+        return function(data){
+            if (data.jsonCode == "200"){
+                successCallback(data);
+            }
+            else {
+                errorCodeHandlers[data.jsonCode](data, errorElmt);
+            }
+        };
+    }
+    // module exports
+    return {
+        logoutUser: logoutUser,
+        formHandler: expensifyFormHandler,
+    };
+}
+
+// Transaction -- module that abstracts
 //      the portion of the application that
 //      is devoted to displaying and creating
 //      user transactions
-// Properties:
-//      containerElmt -- div element that contains
-//          elements that display or create transaction
-//          data
-//      adder -- module that abstracts the part of
-//          application that creates new transactions
-//      table -- module that abstracts the part of the
-//          application that displays transactions
-var transactions = {
-    containerElmt: null,
-    adder: null,
-    table: null,
-};
-
-// transactionTable -- module that abstracts
-//      the portion of the application that
-//      is solely devoted to displaying transactions
-// Properties:
-//          tableElmt -- table element that holds transaction data
-//          fetchForm -- form element where users input parameters
-//              required by API to fetch transaction data
-//          fetchSuccessHandler -- handler to be called if the ajax
-//              request fired by for submision succeeds
-//          fetchErrorHandlers -- object that contains handlers as
-//              properties, keys being specific json error codes
-//          showAllButtonElmt -- button element that is to fire
-//              a request for all user transactions on file
-//          showAllButtonBehavior -- event handler bound to click
-//              that is to make ajax call for all transaction data
-//          addTransaction -- function that creates new table row of
-//              transaction data
-//          clearTable -- function that clears the table of all rows
-//          config -- function that attaches all even handlers to
-//              the relevant elements
-var transactionTable = {
-    element: null,
-    form: null,
-    showAllButtonELmt: null,
-    formSuccessHandler: function (response){
-        this.clearTable();
-        for (var transaction in response){
-            addTransaction(transaction, this.tableElmt);
+function Transactions(Table, Adder){
+    var containerElmt = document.getElementById("trans_con");
+    function showTransactions(){
+        if(containerElmt){
+            containerElmt.style.display = "";
         }
-    },
-    formErrorHandlers: jsonCodeDefaultHandlers,
-    showAllButtonBehavior: function (){
-        ajaxExpensify("get_proxy.php",
-                      { command: "Get", returnValueList: "transactionList" },
-                      this.fetchSuccessHandler, this.fetchErrorHandlers);
-    },
-    addTransaction: function (transaction, table){
+    }
+    return {
+        show: showTransactions,
+        Adder: Adder,
+        Table: Table,
+    };
+}
+
+// Table -- encapsulates the portion of the app
+//          that displays transactions
+function Table(AppTools){
+    var tableElmt = document.getElementById("trans_table");
+    var formElmt = document.getElementById("trans_form");
+    var form = new Form(formElmt, null);
+    var showAllButtonELmt = document.getElementById("show_all");
+    function clearTable(){
+        $(tableElmt).children().remove();
+    }
+    // function loads a single transaction into a table
+    // Parameters:
+    //      transaction -- json object populated with
+    //          transaction data
+    //      table -- DOM table element that displays
+    //          transaction data
+    function addTransaction(transaction, table){
         var row = document.createElement("tr");
         table.appendChild(row);
         var date_cell = document.createElement("td");
@@ -284,134 +246,117 @@ var transactionTable = {
         comment_cell.innerHTML = transaction.comment ? transaction.comment : "";
         row.appendChild(comment_cell);
         table.appendChild(row);
-    },
-    clearTable: function(){
-        $(this.tableElmt).children().remove();
-    },
-    config: function(){
-        ifWellDefinedThen(this, function (){
-            $(showAllButtonELmt).on("click", this.showAllButtonBehavior);
-            // set handlers for form submission for fetching user transactions
-            this.fetchForm.ajaxifySubmit(this.fetchSuccessHandler,
-                                         this.fetchErrorHandlers);
-        }.bind(this));
-    },
-};
+    }
+    // functions loads response data received from
+    // ajax call to API into tables
+    // Parameters:
+    //      response -- object populated with transaction
+    //          objects
+    function formSuccessHandler(response){
+        clearTable();
+        for (var transaction in response){
+            addTransaction(transaction, tableElmt);
+        }
+    }
+    // this form handles both success and error responses from the API
+    var formHandler = AppTools.formHandler(formSuccessHandler);
+    var showAllParams = { command: "Get", returnValueList: "transactionList" };
+    function showAllButtonBehavior(){
+        ajaxJSON("get_proxy.php", showAllParams, formHandler);
+    }
+    function configTable(){
+        // configure the transactions display table
+        $(showAllButtonELmt).on("click", showAllButtonBehavior);
+        // set handler for form submission that fetches user transactions
+        form.ajaxifySubmit(formHandler);
+    }
+    return {
+        config: configTable,
+    };
+}
 
-// transactionAdder -- object that abstracts
-//      the portion of the application that
-//      is solely devoted to creating transactions
-// Properties:
-//          addForm -- form element where users input parameters
-//              required by API to fetch transaction data
-//          addSuccessHandler -- handler to be called if the ajax
-//              request fired by for submision succeeds
-//          addErrorHandlers -- object that contains handlers as
-//              properties, keys being specific json error codes
-//          addButtonElmt -- button element that is to display the
-//              form which has action of adding transaction data to
-//              the database
-//          addButtonBehavior -- event handler bound to the click event
-//              on the button element to display the add transaction form
-//          cancelButtonElmt -- button element that is to hide the form
-//              which has the above action
-//          cancelButtonBehavior -- behavior bound to click event to hide
-//              the above form
-//          config -- function that attaches all even handlers to
-//              the relevant elements
-var transactionsAdder = {
-    form: null,
-    addButtonElmt: null,
-    cancelButtonElmt: null,
-    formSuccessHandler: function(response){
+// Adder -- Module that encapsulates the portion
+//          of the application that adds transactions
+//          to a user's account
+function  Adder(AppTools){
+    var formElmt = document.getElementById("add_form");
+    var addButtonElmt = document.getElementById("add_trans");
+    var cancelButtonElmt = document.getElementById("cancel_add");
+    var form = new Form(formElmt, null);
+    function formSuccessHandler(response){
         console.log("transaction added");
-    },
-    formErrorHandlers: jsonCodeDefaultHandlers,
-    addButtonBehavior: function(){
+    }
+    var formHandler = AppTools.formHandler(formSuccessHandler);
+    function addButtonBehavior(){
         addButtonElmt.style.display = "none";
-        addForm.style.display = "";
-    },
-    cancelButtonBehavior: function(){
-        addForm.style.display = "none";
+        formElmt.style.display = "";
+    }
+    function cancelButtonBehavior(){
+        formElmt.style.display = "none";
         addButtonElmt.style.display = "";
-    },
-    config: function () {
-        ifWellDefinedThen(this, function(){
-            // bind click on add button to appropriate event
-            $(addButtonElmt).on("click", addButtonBehavior);
-            // bind click on cancel button to appropriate event
-            $(cancelButtonElmt).on("click", cancelButtonBehavior);
-            // set handlers for form submission for fetching user transactions
-            this.addForm.ajaxifySubmit(this.addSuccessHandler,
-                                        this.addErrorObject);
-        }.bind(this));
-    },
-};
+    }
+    function configAdder(){
+        // bind click on add button to appropriate event
+        $(addButtonElmt).on("click", addButtonBehavior);
+        // bind click on cancel button to appropriate event
+        $(cancelButtonElmt).on("click", cancelButtonBehavior);
+        // set handlers for form submission for fetching user transactions
+        form.ajaxifySubmit(formHandler);
+    }
+    return {
+        config: configAdder,
+    };
+}
 
-transactions.adder = transactionAdder;
-transactions.table = transactionTable;
 
-// navBar -- object that abstracts the portion
+// NavBar -- module that encapsulates the portion
 //      of the application that comprises and
 //      handles the navigation bar
-// Properties:
-//      navElmt -- nav element that contains user
-//          information and navigation elements
-//      usernameElmt -- inline element that is to
-//          display the current user
-//      logoutElmt -- button element
-var navBar = {
-    element: null,
-    usernameElmt: null,
-    logoutButton: null,
-    logoutButtonBehavior: logoutUser,
-    config: function (){
-        ifWellDefinedThen(this, function(username){
-            this.navElmt.style.display = "";
-            this.usernameElmt.innerHTML = username;
-            $(logoutButton).on("click", this.logoutButtonBehavior);
-        }.bind(this));
-    },
-};
+function NavBar(AppTools){
+    var username = getCookieValue("email");
+    var navElmt = document.getElementsByTagName("nav")[0];
+    var usernameElmt = document.getElementById("logout");
+    var logoutButton = document.getElementById("username");
+    var logoutButtonBehavior = AppTools.logoutUser;
+    function configNavBar(){
+        navElmt.style.display = "";
+        usernameElmt.innerHTML = username;
+        $(logoutButton).on("click", logoutButtonBehavior);
+    }
+    return {
+        config: configNavBar,
+    };
+}
 
-// login -- object that abstracts the portion
-//      of the application that comprises and
-//      handles user authentication
-// Properties:
-//      containerElmt -- div element that contains login form
-//      form -- the form element that authenticates users by
-//          making an expensify API call
-//      remove -- method that removes login from document
-//      successHandler -- success callback for authentication call
-//      errorHandlers -- object of handlers for specific json error
-//          code keys
-//      config -- function that attaches all even handlers to
-//          the relevant elements
-var login = {
-    containerElmt: null,
-    form: null,
-    remove: function() {
-        if (containerElmt){
-            $(containerElmt).remove();
-        }
-    },
-    successHandler: function(response){
-        this.remove();
+
+// Login -- module that encapsulates the portion of
+//          of the application that handles user
+//          authentication
+function Login(Transactions, NavBar, AppTools){
+    var containerElmt = document.getElementById("login_con");
+    var formElmt = document.getElementById("login_form");
+    var messageElmt  = document.getElementById("message");
+    var form = new Form(formElmt, messageElmt);
+    function formSuccessHandler(response) {
+        $(containerElmt).remove();
+        Transactions.show();
         if(response){
             createCookie("email", response.email, 1);
             createCookie("authToken", response.authToken, 1);
         }
-        navBar.congfig();
-        transactions.table.config();
-        transactions.adder.config();
-    },
-    errorHandlers: jsonCodeLoginErrorHandlers,
-    config: function(){
-        ifWellDefinedThen(this, function(){
-            this.form.ajaxifySubmit(this.successHandler, this.errorObject);
-        }.bind(this));
-    },
-};
+        NavBar.congfig();
+        Transactions.Table.config();
+        Transactions.Adder.config();
+    }
+    var formHandler = AppTools.formHandler(formSuccessHandler);
+    function configLogin(){
+        form.ajaxifySubmit(formHandler);
+    }
+    return {
+       config: configLogin,
+       success: formSuccessHandler,
+    };
+}
 
 /////////////////////////////////////////////////
 // On DOM Ready Code ////////////////////////////
@@ -419,24 +364,15 @@ var login = {
 
 $(document).ready(function (){
     var authToken = getCookieValue("authToken");
-    transactions.containerElmt = document.getElementById("trans_con");
-    transactions.table.element = document.getElementById("trans_table");
-    transactions.table.form = new Form(document.getElementById("show_form"));
-    transactions.table.showAllButtonELmt = document.getElementById("show_all");
-    transactions.adder.element = document.getElementById("add_trans");
-    transactions.adder.cancelButtonElmt = document.getElementById("cancel_add");
-    transactions.adder.form = new Form(document.getElementById("add_form"));
-    navBar.element = document.getElementsByTagName("nav")[0];
-    navBar.logoutElmt = document.getElementById("logout");
-    navBar.usernameElmt = document.getElementById("username");
-    login.containerElmt = document.getElementById("login_con");
-    var login_form = document.getElementById("login_form");
-    var login_message = document.getElementById("message");
-    login.form = new Form(login_form, login_message);
+    // load up modules
+    var AppTools = AppTools();
+    var Transactions = Transactions( Table(AppTools), Adder(AppTools));
+    var NavBar = NavBar(AppTools);
+    var Login = Login(Transactions, NavBar, AppTools);
     if (!authToken){
-        login.config();
+        Login.config();
     }
     else {
-        login.successHandler();
+        Login.success();
     }
 });
