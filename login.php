@@ -9,7 +9,7 @@
             </tr>
             <tr>
                 <td>
-                    <input required type="text" placeholder="Password"  name="partnerUserSecret">
+                    <input required type="password" placeholder="Password"  name="partnerUserSecret">
                 </td>
             </tr>
             <tr>

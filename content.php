@@ -6,20 +6,20 @@
                 <table>
                     <tr>
                         <td>
-                            <input type="date" name="startDate" placeholder="yyyy/mm/dd">
+                            <input required type="date" name="startDate" placeholder="Start Date">
                         </td>
                         <td>
-                            <input type="date" name="endDate" placeholder="yyyy/mm/dd">
+                            <input required type="date" name="endDate" placeholder="End Date">
                         </td>
                         <td>
                             <button type="submit">Show</button>
                             <button type="reset">Reset</button>
-                            <button type="button" id="show_all">show all</button>
+                            <button type="button" id="show_all">Show All</button>
                         </td>
                     </tr>
                 </table>
         </form>
-        <table id="trans_table"><progress id="progress">Loading...</progress></table>
+        <table id="trans_table"></table>
     </div>
     <div id="add_con">
         <button id="add_trans">Add</button>
@@ -28,16 +28,16 @@
             <table>
                 <tr>
                     <td>
-                        <input type="date" name="created" placeholder="yyyy/mm/dd">
+                        <input required type="date" name="created" placeholder="yyyy/mm/dd">
                     </td>
                     <td>
-                        <input type="text" name="amount" placeholder="Amount">
+                        <input required type="text" name="amount" placeholder="Amount">
                     </td>
                     <td>
-                        <input type="text" name="merchant" placeholder="Merchant">
+                        <input required type="text" name="merchant" placeholder="Merchant">
                     </td>
                     <td>
-                        <input type="text" name="comments" placeholder="Comments...">
+                        <input type="text" name="comment" placeholder="Comments...">
                     </td>
                     <td>
                         <button type="submit">Add</button>

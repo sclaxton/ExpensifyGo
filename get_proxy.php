@@ -38,9 +38,6 @@ if ($_GET['command']){
         proxyRequest($api_url);
     }
     else if ($_COOKIE['authToken']){
-        if ($_GET['command'] == "CreateTransaction"){
-            $qs = $qs . "&created=" . date("Y-m-d H:i:s");
-        }
         $authToken = $_COOKIE['authToken'];
         $qs = $qs . "&authToken=" . $authToken;
         $api_url = $api_url . $qs;
