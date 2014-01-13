@@ -86,13 +86,11 @@ function Form(formElmt, errorElmt){
         return new Form(formElmt, errorElmt);
     }
     this.formElmt = formElmt;
-    this.errorElmt = errorElmt || null;
 }
 
 // class method that ajaxify's form submission on a form
 Form.prototype.ajaxifySubmit = function(responseHandler) {
     var self = this;
-    console.log(this);
     var url = self.formElmt.action;
     $(self.formElmt).submit(function(event){
         var params = $(self.formElmt).serialize();
@@ -139,7 +137,20 @@ function AppTools(){
     //      errorElmt -- the inline element to contain the error
     //          the login error message to be displayed
     function errorLogin(error, errorElmt){
-        errorElmt.innerHTML = error.message;
+        var message = "";
+        var errorCode = Number(error.jsonCode);
+        switch(errorCode){
+            case 401:
+                message = "Wrong password.";
+                break;
+            case 404:
+                message = "Account not found.";
+                break;
+            case 405:
+                message = "Unvalidated email address.";
+                break;
+        }
+        errorElmt.innerHTML = message;
     }
     // object that handles the default set of json error codes
     var errorCodeHandlers = {
@@ -220,7 +231,7 @@ function Transactions(Table, Adder){
 function Table(AppTools){
     var tableElmt = document.getElementById("trans_table");
     var formElmt = document.getElementById("show_form");
-    var form = new Form(formElmt, null);
+    var form = new Form(formElmt);
     var showAllButtonELmt = document.getElementById("show_all");
     function clearTable(){
         $(tableElmt).children().remove();
@@ -283,9 +294,10 @@ function  Adder(AppTools){
     var formElmt = document.getElementById("add_form");
     var addButtonElmt = document.getElementById("add_trans");
     var cancelButtonElmt = document.getElementById("cancel_add");
-    var form = new Form(formElmt, null);
+    var form = new Form(formElmt);
     function addSuccessHandler(response){
         console.log("transaction added");
+        cancelButtonBehavior();
     }
     var formHandler = AppTools.formHandler(addSuccessHandler);
     function addButtonBehavior(){
@@ -337,10 +349,9 @@ function Login(Transactions, NavBar, AppTools){
     var containerElmt = document.getElementById("login_con");
     var formElmt = document.getElementById("login_form");
     var messageElmt  = document.getElementById("message");
-    var form = new Form(formElmt, messageElmt);
+    var form = new Form(formElmt);
     function loginSuccessHandler(response) {
         $(containerElmt).remove();
-        Transactions.show();
         var email;
         if(response){
             email = response.email;
@@ -348,10 +359,11 @@ function Login(Transactions, NavBar, AppTools){
             createCookie("authToken", response.authToken, 1);
         }
         NavBar.config(email);
+        Transactions.show();
         Transactions.Table.config();
         Transactions.Adder.config();
     }
-    var formHandler = AppTools.formHandler(loginSuccessHandler);
+    var formHandler = AppTools.formHandler(loginSuccessHandler, messageElmt);
     function configLogin(){
         form.ajaxifySubmit(formHandler);
     }
