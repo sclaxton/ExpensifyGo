@@ -253,14 +253,14 @@ function Table(AppTools){
     // Parameters:
     //      response -- object populated with transaction
     //          objects
-    function formSuccessHandler(response){
+    function showSuccessHandler(response){
         var transactions = response.transactionList;
         console.log(transactions);
         clearTable();
         transactions.forEach(addTransaction.bind(undefined, tableElmt));
     }
     // this form handles both success and error responses from the API
-    var formHandler = AppTools.formHandler(formSuccessHandler);
+    var formHandler = AppTools.formHandler(showSuccessHandler);
     var showAllParams = { command: "Get", returnValueList: "transactionList" };
     function showAllButtonBehavior(){
         ajaxJSON("get_proxy.php", showAllParams, formHandler);
@@ -284,10 +284,10 @@ function  Adder(AppTools){
     var addButtonElmt = document.getElementById("add_trans");
     var cancelButtonElmt = document.getElementById("cancel_add");
     var form = new Form(formElmt, null);
-    function formSuccessHandler(response){
+    function addSuccessHandler(response){
         console.log("transaction added");
     }
-    var formHandler = AppTools.formHandler(formSuccessHandler);
+    var formHandler = AppTools.formHandler(addSuccessHandler);
     function addButtonBehavior(){
         addButtonElmt.style.display = "none";
         formElmt.style.display = "";
@@ -338,7 +338,7 @@ function Login(Transactions, NavBar, AppTools){
     var formElmt = document.getElementById("login_form");
     var messageElmt  = document.getElementById("message");
     var form = new Form(formElmt, messageElmt);
-    function formSuccessHandler(response) {
+    function loginSuccessHandler(response) {
         $(containerElmt).remove();
         Transactions.show();
         var email;
@@ -351,13 +351,13 @@ function Login(Transactions, NavBar, AppTools){
         Transactions.Table.config();
         Transactions.Adder.config();
     }
-    var formHandler = AppTools.formHandler(formSuccessHandler);
+    var formHandler = AppTools.formHandler(loginSuccessHandler);
     function configLogin(){
         form.ajaxifySubmit(formHandler);
     }
     return {
        config: configLogin,
-       success: formSuccessHandler,
+       success: loginSuccessHandler,
     };
 }
 
@@ -369,7 +369,7 @@ $(document).ready(function (){
     var authToken = getCookieValue("authToken");
     // load up modules
     var apptools = AppTools();
-    var transactions = Transactions( Table(apptools), Adder(apptools));
+    var transactions = Transactions(Table(apptools), Adder(apptools));
     var navbar = NavBar(apptools);
     var login = Login(transactions, navbar, apptools);
     if (!authToken){

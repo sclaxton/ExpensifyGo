@@ -4,12 +4,12 @@
         <table>
             <tr>
                 <td>
-                    <input required type="text" placeholder="Username" name="partnerUserID">
+                    <input required type="text" placeholder="Username"  name="partnerUserID">
                 </td>
             </tr>
             <tr>
                 <td>
-                    <input required type="text" placeholder="Password" name="partnerUserSecret">
+                    <input required type="text" placeholder="Password"  name="partnerUserSecret">
                 </td>
             </tr>
             <tr>

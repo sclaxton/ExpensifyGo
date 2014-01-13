@@ -1,4 +1,4 @@
-<div id="trans_con">
+<div style="display:none;" id="trans_con">
     <div id="trans_table_con">
         <form id="show_form">
             <input type="hidden" name="command" value="Get">
@@ -6,10 +6,10 @@
                 <table>
                     <tr>
                         <td>
-                            <input type="text" name="startDate" placeholder="yyyy/mm/dd">
+                            <input type="date" name="startDate" placeholder="yyyy/mm/dd">
                         </td>
                         <td>
-                            <input type="text" name="endDate" placeholder="yyyy/mm/dd">
+                            <input type="date" name="endDate" placeholder="yyyy/mm/dd">
                         </td>
                         <td>
                             <button type="submit">Show</button>
@@ -19,7 +19,7 @@
                     </tr>
                 </table>
         </form>
-        <table id="trans_table"></table>
+        <table id="trans_table"><progress id="progress">Loading...</progress></table>
     </div>
     <div id="add_con">
         <button id="add_trans">Add</button>
@@ -28,7 +28,7 @@
             <table>
                 <tr>
                     <td>
-                        <input type="text" name="date" placeholder="yyyy/mm/dd">
+                        <input type="date" name="created" placeholder="yyyy/mm/dd">
                     </td>
                     <td>
                         <input type="text" name="amount" placeholder="Amount">
