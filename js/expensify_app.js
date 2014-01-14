@@ -8,7 +8,7 @@ function ajaxJSON(url, params, callback){
         dataType: "json",
         url: url,
         data: params,
-        success: function(data){
+        success: function(data) {
             callback(data);
         },
         error: function(jqXHR, clientStatus, httpStatus){
@@ -91,10 +91,17 @@ function Form(formElmt, errorElmt){
 // class method that ajaxify's form submission on a form
 Form.prototype.ajaxifySubmit = function(responseHandler) {
     var self = this;
-    var url = self.formElmt.action;
+    var formElmt = self.formElmt;
+    var url = formElmt.action;
     $(self.formElmt).submit(function(event){
         var params = $(self.formElmt).serialize();
-        ajaxJSON(url, params, responseHandler);
+        var $fields = $(formElmt).find("input, button");
+        $fields.attr("disabled", true);
+        ajaxJSON(url, params, function(response){
+            formElmt.reset();
+            $fields.attr("disabled", false);
+            responseHandler(response);
+        });
         return false;
     });
 };
@@ -201,8 +208,14 @@ function AppTools(){
             }
         };
     }
+    function cancelAddButtonBehavior(formElmt){
+        var buttons = document.getElementById("buttons");
+        buttons.classList.toggle("hide");
+        formElmt.classList.toggle("hide");
+    }
     // module exports
     return {
+        cancelAddButtonBehavior: cancelAddButtonBehavior,
         logoutUser: logoutUser,
         formHandler: expensifyFormHandler,
     };
@@ -216,7 +229,7 @@ function Transactions(Table, Adder){
     var containerElmt = document.getElementById("trans_con");
     function showTransactions(){
         if(containerElmt){
-            containerElmt.style.display = "";
+            containerElmt.classList.toggle("hide");
         }
     }
     return {
@@ -229,12 +242,28 @@ function Transactions(Table, Adder){
 // Table -- encapsulates the portion of the app
 //          that displays transactions
 function Table(AppTools){
-    var tableElmt = document.getElementById("trans_table");
+    var bodyElmt = document.getElementById("trans_body");
     var formElmt = document.getElementById("show_form");
     var form = new Form(formElmt);
+    var moreButtonElmt = document.getElementById("see_more");
+    var cancelButtonElmt = document.getElementById("cancel_show");
     var showAllButtonELmt = document.getElementById("show_all");
     function clearTable(){
-        $(tableElmt).children().remove();
+        $(bodyElmt).children().remove();
+    }
+    function parseMoney(string){
+        if (string) {
+            var temp = Number(string);
+            if ( temp < 0){
+                temp = Math.abs(temp);
+                temp = "-$" + temp;
+                return temp;
+            }
+            else {
+                return "$" + temp;
+            }
+        }
+        return "error";
     }
     // function loads a single transaction into a table
     // Parameters:
@@ -242,22 +271,22 @@ function Table(AppTools){
     //          transaction data
     //      table -- DOM table element that displays
     //          transaction data
-    function addTransaction(table, transaction){
+    function addTransaction(tableBody, transaction){
         var row = document.createElement("tr");
-        table.appendChild(row);
+        tableBody.appendChild(row);
         var date_cell = document.createElement("td");
         date_cell.innerHTML = transaction.created;
         row.appendChild(date_cell);
         var amount_cell = document.createElement("td");
-        amount_cell.innerHTML = transaction.amount;
+        console.log(!transaction.amount);
+        amount_cell.innerHTML = parseMoney(transaction.amount);
         row.appendChild(amount_cell);
         var merchant_cell = document.createElement("td");
         merchant_cell.innerHTML = transaction.merchant;
         row.appendChild(merchant_cell);
         var comment_cell = document.createElement("td");
-        comment_cell.innerHTML = transaction.comment ? transaction.comment : "";
+        comment_cell.innerHTML = transaction.comment;
         row.appendChild(comment_cell);
-        table.appendChild(row);
     }
     // functions loads response data received from
     // ajax call to API into tables
@@ -268,7 +297,17 @@ function Table(AppTools){
         var transactions = response.transactionList;
         console.log(transactions);
         clearTable();
-        transactions.forEach(addTransaction.bind(undefined, tableElmt));
+        if (transactions.length < 1) {
+            var row = document.createElement("tr");
+            var cell = document.createElement("td");
+            cell.id = "message_cell";
+            message = document.createElement("span");
+            message.innerHTML = "No transactions during this period.";
+            row.appendChild(cell);
+            cell.appendChild(message);
+            bodyElmt.appendChild(row);
+        }
+        transactions.forEach(addTransaction.bind(undefined, bodyElmt));
     }
     // this form handles both success and error responses from the API
     var formHandler = AppTools.formHandler(showSuccessHandler);
@@ -276,7 +315,31 @@ function Table(AppTools){
     function showAllButtonBehavior(){
         ajaxJSON("get_proxy.php", showAllParams, formHandler);
     }
+    function currentMonthParams(){
+        var currentdate_date = new Date();
+        var month = currentdate_date.getMonth()+1;
+        month = month < 10 ? '0' + month : month;
+        var day = currentdate_date.getDate();
+        day = day < 10 ? '0' + day : day;
+        var year = currentdate_date.getFullYear();
+        var start = (year + '-' + month + '-' + '00');
+        var end = (year + '-' + month + '-' + day);
+        return {
+            command: "Get",
+            returnValueList: "transactionList",
+            startDate: start,
+            endDate: end
+        };
+    }
     function configTable(){
+        // attach event handler to see more and cancel buttons
+        $([moreButtonElmt, cancelButtonElmt]).on("click", function (event){
+            console.log(event.target);
+            AppTools.cancelAddButtonBehavior(formElmt);
+        });
+        // show the current month's transactions
+        console.log(currentMonthParams());
+        ajaxJSON("get_proxy.php", currentMonthParams(), formHandler);
         // configure the transactions display table
         $(showAllButtonELmt).on("click", showAllButtonBehavior);
         // set handler for form submission that fetches user transactions
@@ -300,19 +363,11 @@ function  Adder(AppTools){
         cancelButtonBehavior();
     }
     var formHandler = AppTools.formHandler(addSuccessHandler);
-    function addButtonBehavior(){
-        addButtonElmt.style.display = "none";
-        formElmt.style.display = "";
-    }
-    function cancelButtonBehavior(){
-        formElmt.style.display = "none";
-        addButtonElmt.style.display = "";
-    }
     function configAdder(){
-        // bind click on add button to appropriate event
-        $(addButtonElmt).on("click", addButtonBehavior);
-        // bind click on cancel button to appropriate event
-        $(cancelButtonElmt).on("click", cancelButtonBehavior);
+        // attach behavior to add transaction and cancel buttons
+        $([addButtonElmt, cancelButtonElmt]).on("click", function (event){
+            AppTools.cancelAddButtonBehavior(formElmt);
+        });
         // set handlers for form submission for fetching user transactions
         form.ajaxifySubmit(formHandler);
     }
@@ -332,7 +387,7 @@ function NavBar(AppTools){
     var logoutButtonBehavior = AppTools.logoutUser;
     function configNavBar(email){
         var username = email || getCookieValue("email");
-        navElmt.style.display = "";
+        navElmt.classList.toggle("hide");
         usernameElmt.innerHTML = username;
         $(logoutButton).on("click", logoutButtonBehavior);
     }
