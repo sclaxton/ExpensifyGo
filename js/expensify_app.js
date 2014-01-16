@@ -314,6 +314,7 @@ function Table(AppTools){
     }
     // function inserts html string into the message
     function dataLoading(){
+        clearTable();
         var htmlString = "<p id='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
         insertTableMessage(htmlString);
     }
