@@ -268,29 +268,6 @@ function Table(AppTools){
         }
         return "void";
     }
-    // function loads a single transaction into a table
-    // Parameters:
-    //      transaction -- json object populated with
-    //          transaction data
-    //      table -- DOM table element that displays
-    //          transaction data
-    function addTransaction(tableBody, transaction){
-        var row = document.createElement("tr");
-        tableBody.appendChild(row);
-        var date_cell = document.createElement("td");
-        date_cell.innerHTML = transaction.created;
-        row.appendChild(date_cell);
-        var amount_cell = date_cell.cloneNode(false);
-        console.log(!transaction.amount);
-        amount_cell.innerHTML = parseMoney(transaction.amount);
-        row.appendChild(amount_cell);
-        var merchant_cell = date_cell.cloneNode(false);
-        merchant_cell.innerHTML = transaction.merchant;
-        row.appendChild(merchant_cell);
-        var comment_cell = date_cell.cloneNode(false);
-        comment_cell.innerHTML = transaction.comment;
-        row.appendChild(comment_cell);
-    }
     //function computes the current date
     //and then return an params object to
     //pass to an ajax call requesting transactions
@@ -339,6 +316,29 @@ function Table(AppTools){
     function dataLoading(){
         var htmlString = "<p id='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
         insertTableMessage(htmlString);
+    }
+    // function loads a single transaction into a table
+    // Parameters:
+    //      transaction -- json object populated with
+    //          transaction data
+    //      table -- DOM table element that displays
+    //          transaction data
+    function addTransaction(tableBody, transaction){
+        var row = document.createElement("tr");
+        tableBody.appendChild(row);
+        var date_cell = document.createElement("td");
+        date_cell.innerHTML = readifyUTCDate(transaction.created);
+        row.appendChild(date_cell);
+        var amount_cell = date_cell.cloneNode(false);
+        console.log(!transaction.amount);
+        amount_cell.innerHTML = parseMoney(transaction.amount);
+        row.appendChild(amount_cell);
+        var merchant_cell = date_cell.cloneNode(false);
+        merchant_cell.innerHTML = transaction.merchant;
+        row.appendChild(merchant_cell);
+        var comment_cell = date_cell.cloneNode(false);
+        comment_cell.innerHTML = transaction.comment;
+        row.appendChild(comment_cell);
     }
     // functions loads response data received from
     // ajax call to API into tables
