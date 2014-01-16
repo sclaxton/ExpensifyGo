@@ -10,3 +10,5 @@ Some of the challenges I faced while building the app included: learning PHP fro
 
 In the end, I am really happy with what I came up with and hope you guys enjoy it as well!
 
+N.B. The HTML5 date picker is only supported in chrome, for this reason the app is most useable. One thing I would do given more time would be to add a jQueryUI date picker to remedy this.
+
