@@ -126,6 +126,16 @@ input {
     -webkit-border-radius: 10px;
 }
 
+.visible{
+    opacity: 1;
+    visibility: visible;
+}
+
+.fade_hide {
+    opacity: 0;
+    visibility: hidden;
+}
+
 #title:visited, #title:link, #title:hover {
     color: #000000;
     text-decoration: none;
@@ -150,6 +160,13 @@ input {
 
 #show_form label {
     color:#00a5d5;
+    font: 12px/24px Arial, sans-serif;
+}
+
+#add_message {
+    left-margin: 0.5em;
+    color:#00a5d5;
+    transition: opacity 3s ease, visibility 3s ease;
     font: 12px/24px Arial, sans-serif;
 }
 

@@ -24,6 +24,7 @@
                             <button type="submit" id="add_button">Add</button>
                             <button type="reset">Reset</button>
                             <button type="button" id="cancel_add">Cancel</button>
+                            <span class="fade_hide small" id="add_message">Added!</span>
                         </td>
                     </tr>
                 </tbody>

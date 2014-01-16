@@ -214,8 +214,46 @@ function AppTools(){
         buttons.classList.toggle("hide");
         formElmt.classList.toggle("hide");
     }
+    function fadeOutElmt(elmt, mils){
+        elmt.classList.toggle("fade_hide");
+        elmt.classList.toggle("visible");
+        setTimeout(function(){
+            elmt.classList.toggle("visible");
+            elmt.classList.toggle("fade_hide");
+        }, mils);
+    }
+    // function parses date in YYYY-MM-DD
+    // format and return a MM/DD/YYYY date
+    // Parameters:
+    //      UTCdate -- date in YYYY-MM-DD format
+    function readifyUTCDate(UTCdate){
+        var array = UTCdate.split("-");
+        var year = array[0];
+        var month = array[1];
+        var day = array[2];
+        return month + "/" + day + "/" + year;
+    }
+    // function add $ sign in the right place
+    // for the display of monetary amounts
+    function parseMoney(string){
+        if (string) {
+            var temp = Number(string);
+            if ( temp < 0){
+                temp = Math.abs(temp);
+                temp = "-$" + temp;
+                return temp;
+            }
+            else {
+                return "$" + temp;
+            }
+        }
+        return "void";
+    }
     // module exports
     return {
+        parseMoney: parseMoney,
+        readifyUTCDate: readifyUTCDate,
+        fadeOutElmt: fadeOutElmt,
         cancelAddButtonBehavior: cancelAddButtonBehavior,
         logoutUser: logoutUser,
         formHandler: expensifyFormHandler,
@@ -252,22 +290,6 @@ function Table(AppTools){
     function clearTable(){
         $(bodyElmt).children().remove();
     }
-    // function add $ sign in the right place
-    // for the display of monetary amounts
-    function parseMoney(string){
-        if (string) {
-            var temp = Number(string);
-            if ( temp < 0){
-                temp = Math.abs(temp);
-                temp = "-$" + temp;
-                return temp;
-            }
-            else {
-                return "$" + temp;
-            }
-        }
-        return "void";
-    }
     //function computes the current date
     //and then return an params object to
     //pass to an ajax call requesting transactions
@@ -288,17 +310,6 @@ function Table(AppTools){
             startDate: start,
             endDate: end
         };
-    }
-    // function parses date in YYYY-MM-DD
-    // format and return a MM/DD/YYYY date
-    // Parameters:
-    //      UTCdate -- date in YYYY-MM-DD format
-    function readifyUTCDate(UTCdate){
-        var array = UTCdate.split("-");
-        var year = array[0];
-        var month = array[1];
-        var day = array[2];
-        return month + "/" + day + "/" + year;
     }
     // function displays a string into a message box
     // in the center of the transactions table body
@@ -328,11 +339,11 @@ function Table(AppTools){
         var row = document.createElement("tr");
         tableBody.appendChild(row);
         var date_cell = document.createElement("td");
-        date_cell.innerHTML = readifyUTCDate(transaction.created);
+        date_cell.innerHTML = AppTools.readifyUTCDate(transaction.created);
         row.appendChild(date_cell);
         var amount_cell = date_cell.cloneNode(false);
         console.log(!transaction.amount);
-        amount_cell.innerHTML = parseMoney(transaction.amount);
+        amount_cell.innerHTML = AppTools.parseMoney(transaction.amount);
         row.appendChild(amount_cell);
         var merchant_cell = date_cell.cloneNode(false);
         merchant_cell.innerHTML = transaction.merchant;
@@ -397,9 +408,10 @@ function  Adder(AppTools){
     var addButtonElmt = document.getElementById("add_trans");
     var cancelButtonElmt = document.getElementById("cancel_add");
     var form = new Form(formElmt);
+    var userFeedbackElmt = document.getElementById("add_message");
     function addSuccessHandler(response){
+        AppTools.fadeOutElmt(userFeedbackElmt, 3000);
         console.log("transaction added");
-        cancelButtonBehavior();
     }
     var formHandler = AppTools.formHandler(addSuccessHandler);
     function configAdder(){
