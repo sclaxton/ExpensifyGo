@@ -365,7 +365,7 @@ function Table(AppTools){
     var showAllParams = { command: "Get", returnValueList: "transactionList" };
     // binds handler to click event on showAll button
     function showAllButtonBehavior(){
-        ajaxJSON("get_proxy.php", showAllParams, formHandler, dataLoading);
+        ajaxJSON("get_proxy.php", showAllParams, showAllHandler, dataLoading);
     }
     function configTable(){
         // attach event handler to see more and cancel buttons
