@@ -4,6 +4,8 @@ function getResponseHeaders($response, $header_size) {
     $headers = explode("\r\n", preg_replace('/\x0D\x0A[\x09\x20]+/', ' ', $header_str));
     return $headers;
 }
+// function proxies an asynchronous request to the API
+// via the curl library
 function proxyRequest($url){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -25,6 +27,7 @@ function proxyRequest($url){
     }
     echo $body;
 }
+//Script body
 if ($_GET['command']){
     $qs = $_SERVER['QUERY_STRING'];
     $api_url = "https://api.expensify.com?";
@@ -41,7 +44,6 @@ if ($_GET['command']){
         $authToken = $_COOKIE['authToken'];
         $qs = $qs . "&authToken=" . $authToken;
         $api_url = $api_url . $qs;
-        //echo $api_url;
         proxyRequest($api_url);
     }
 }

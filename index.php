@@ -19,7 +19,7 @@
         <div id="content">
         <?php
             require_once 'login.php';
-            require_once 'content.php';
+            require_once 'table.php';
         ?>
         </div>
     </body>

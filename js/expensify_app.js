@@ -3,8 +3,9 @@
 /////////////////////////////////////////////////
 
 // function that makes an ajax call to the expensify API
-function ajaxJSON(url, params, callback){
+function ajaxJSON(url, params, callback, before){
     $.ajax({
+        beforeSend: before,
         dataType: "json",
         url: url,
         data: params,
@@ -89,7 +90,7 @@ function Form(formElmt, errorElmt){
 }
 
 // class method that ajaxify's form submission on a form
-Form.prototype.ajaxifySubmit = function(responseHandler) {
+Form.prototype.ajaxifySubmit = function(responseHandler, before) {
     var self = this;
     var formElmt = self.formElmt;
     var url = formElmt.action;
@@ -101,7 +102,7 @@ Form.prototype.ajaxifySubmit = function(responseHandler) {
             formElmt.reset();
             $fields.attr("disabled", false);
             responseHandler(response);
-        });
+        }, before);
         return false;
     });
 };
@@ -251,6 +252,8 @@ function Table(AppTools){
     function clearTable(){
         $(bodyElmt).children().remove();
     }
+    // function add $ sign in the right place
+    // for the display of monetary amounts
     function parseMoney(string){
         if (string) {
             var temp = Number(string);
@@ -263,7 +266,7 @@ function Table(AppTools){
                 return "$" + temp;
             }
         }
-        return "error";
+        return "void";
     }
     // function loads a single transaction into a table
     // Parameters:
@@ -277,44 +280,22 @@ function Table(AppTools){
         var date_cell = document.createElement("td");
         date_cell.innerHTML = transaction.created;
         row.appendChild(date_cell);
-        var amount_cell = document.createElement("td");
+        var amount_cell = date_cell.cloneNode(false);
         console.log(!transaction.amount);
         amount_cell.innerHTML = parseMoney(transaction.amount);
         row.appendChild(amount_cell);
-        var merchant_cell = document.createElement("td");
+        var merchant_cell = date_cell.cloneNode(false);
         merchant_cell.innerHTML = transaction.merchant;
         row.appendChild(merchant_cell);
-        var comment_cell = document.createElement("td");
+        var comment_cell = date_cell.cloneNode(false);
         comment_cell.innerHTML = transaction.comment;
         row.appendChild(comment_cell);
     }
-    // functions loads response data received from
-    // ajax call to API into tables
-    // Parameters:
-    //      response -- object populated with transaction
-    //          objects
-    function showSuccessHandler(response){
-        var transactions = response.transactionList;
-        console.log(transactions);
-        clearTable();
-        if (transactions.length < 1) {
-            var row = document.createElement("tr");
-            var cell = document.createElement("td");
-            cell.id = "message_cell";
-            message = document.createElement("span");
-            message.innerHTML = "No transactions during this period.";
-            row.appendChild(cell);
-            cell.appendChild(message);
-            bodyElmt.appendChild(row);
-        }
-        transactions.forEach(addTransaction.bind(undefined, bodyElmt));
-    }
-    // this form handles both success and error responses from the API
-    var formHandler = AppTools.formHandler(showSuccessHandler);
-    var showAllParams = { command: "Get", returnValueList: "transactionList" };
-    function showAllButtonBehavior(){
-        ajaxJSON("get_proxy.php", showAllParams, formHandler);
-    }
+    //function computes the current date
+    //and then return an params object to
+    //pass to an ajax call requesting transactions
+    //from the current month. function puts date into
+    //this date into YYYY-MM-DD format
     function currentMonthParams(){
         var currentdate_date = new Date();
         var month = currentdate_date.getMonth()+1;
@@ -322,7 +303,7 @@ function Table(AppTools){
         var day = currentdate_date.getDate();
         day = day < 10 ? '0' + day : day;
         var year = currentdate_date.getFullYear();
-        var start = (year + '-' + month + '-' + '00');
+        var start = (year + '-' + month + '-' + '01');
         var end = (year + '-' + month + '-' + day);
         return {
             command: "Get",
@@ -331,6 +312,61 @@ function Table(AppTools){
             endDate: end
         };
     }
+    // function parses date in YYYY-MM-DD
+    // format and return a MM/DD/YYYY date
+    // Parameters:
+    //      UTCdate -- date in YYYY-MM-DD format
+    function readifyUTCDate(UTCdate){
+        var array = UTCdate.split("-");
+        var year = array[0];
+        var month = array[1];
+        var day = array[2];
+        return month + "/" + day + "/" + year;
+    }
+    // function displays a string into a message box
+    // in the center of the transactions table body
+    function insertTableMessage(message){
+        var row = document.createElement("tr");
+        var cell = document.createElement("td");
+        row.id = "message_row";
+        var messageElmt = document.createElement("div");
+        messageElmt.innerHTML = message;
+        row.appendChild(cell);
+        cell.appendChild(messageElmt);
+        bodyElmt.appendChild(row);
+    }
+    // function inserts html string into the message
+    function dataLoading(){
+        var htmlString = "<p id='loading'>Loading<span>.</span><span>.</span><span>.</span></p>";
+        insertTableMessage(htmlString);
+    }
+    // functions loads response data received from
+    // ajax call to API into tables
+    // Parameters:
+    //      response -- object populated with transaction
+    //          objects
+    function showSuccessConstructor(dates, response){
+        var transactions = response.transactionList;
+        console.log(transactions);
+        clearTable();
+        if (transactions.length < 1) {
+            var message = "No transactions to show.";
+            if (dates){
+                var startDate = readifyUTCDate(dates.startDate);
+                var endDate = readifyUTCDate(dates.endDate);
+                message = "No transactions in the period " + startDate + " – " + endDate + ".";
+            }
+            insertTableMessage(message);
+        }
+        transactions.forEach(addTransaction.bind(undefined, bodyElmt));
+    }
+    var showAllSuccessHandler = showSuccessConstructor.bind(undefined, null);
+    var showAllHandler = AppTools.formHandler(showAllSuccessHandler);
+    var showAllParams = { command: "Get", returnValueList: "transactionList" };
+    // binds handler to click event on showAll button
+    function showAllButtonBehavior(){
+        ajaxJSON("get_proxy.php", showAllParams, formHandler, dataLoading);
+    }
     function configTable(){
         // attach event handler to see more and cancel buttons
         $([moreButtonElmt, cancelButtonElmt]).on("click", function (event){
@@ -338,8 +374,10 @@ function Table(AppTools){
             AppTools.cancelAddButtonBehavior(formElmt);
         });
         // show the current month's transactions
-        console.log(currentMonthParams());
-        ajaxJSON("get_proxy.php", currentMonthParams(), formHandler);
+        var requestMonths = currentMonthParams();
+        var showPeriodSuccessHandler = showSuccessConstructor.bind(undefined, requestMonths);
+        var formHandler = AppTools.formHandler(showPeriodSuccessHandler, dataLoading);
+        ajaxJSON("get_proxy.php", requestMonths, formHandler, dataLoading);
         // configure the transactions display table
         $(showAllButtonELmt).on("click", showAllButtonBehavior);
         // set handler for form submission that fetches user transactions

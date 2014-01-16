@@ -96,7 +96,6 @@ button {
     border-radius: 4px;
     -moz-border-radius: 4px;
     -webkit-border-radius: 4px;
-    /*padding: 3px;*/
     cursor: pointer;
     border:1px solid #00a5d5;
 }
@@ -143,23 +142,10 @@ input {
     height: 100%;
 }
 
-#message {
-    color: red;
-    font: 12px Arial, sans-serif;
-}
-
-#message_cell {
-    margin-top: 100px;
-    height: 100% !important;
-    width: 100% !important;
-}
+/*Configure main table that displays data*/
 
 #show_button, #add_button {
     margin-left: 0.5em;
-}
-
-#show_form, #add_form {
-    max-height: 24px;
 }
 
 #show_form label {
@@ -172,6 +158,7 @@ input {
 }
 
 #forms {
+    max-height: 24px;
     margin-bottom: 0.5em;
 }
 
@@ -215,7 +202,6 @@ input {
     background: #00a5d5;
     color: white;
     font: 16px/30px Arial, sans-serif;
-    /*text-align: left;*/
 }
 
 #trans_table tbody {
@@ -235,4 +221,68 @@ input {
 
 #trans_table tbody td {
     font: 12px/24px Arial, sans-serif;
+}
+
+/*Configure message box to be displayed in the table*/
+
+#message {
+    color: red;
+    font: 12px Arial, sans-serif;
+}
+
+#message_row {
+    height: 100% !important;
+    width: 100% !important;
+}
+
+#message_row td {
+    height: 100% !important;
+    width: 100% !important;
+    position: relative;
+}
+
+#message_row td div {
+    position: absolute;
+    height: 100% !important;
+    width: 100% !important;
+    display: table;
+}
+
+#message_row td div p {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
+/* Loading animations*/
+
+@-webkit-keyframes opacity {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+@-moz-keyframes opacity {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+#loading {
+    text-align: center;
+}
+
+#loading span {
+    -webkit-animation-name: opacity;
+    -webkit-animation-duration: 1.5s;
+    -webkit-animation-iteration-count: infinite;
+    -moz-animation-name: opacity;
+    -moz-animation-duration: 1.5s;
+    -moz-animation-iteration-count: infinite;
+}
+
+#loading span:nth-child(2) {
+    -webkit-animation-delay: 200ms;
+    -moz-animation-delay: 200ms;
+}
+
+#loading span:nth-child(3) {
+    -webkit-animation-delay: 300ms;
+    -moz-animation-delay: 300ms;
 }
