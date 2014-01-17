@@ -10,5 +10,7 @@ Some of the challenges I faced while building the app included: learning PHP fro
 
 In the end, I am really happy with what I came up with and hope you guys enjoy it as well!
 
+If I were to continue to develop this application, I would probably start with the following things: making the forms more useable, form validation, more feedback/error messages, more responsive design (make it mobile)...just to name a few.
+
 N.B. The HTML5 date picker is only supported in chrome, for this reason the app is most useable. One thing I would do given more time would be to add a jQueryUI date picker to remedy this.
 
