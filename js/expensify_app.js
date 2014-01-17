@@ -33,8 +33,8 @@ function createCookie(cookie_name, value, hours) {
     var expires;
     if (hours) {
         var date = new Date();
-        date.setTime(date.getTime()+(hours*60*60*1000));
-        expires = "; expires="+date.toGMTString();
+        date.setTime(date.getTime() + (hours*60*60*1000));
+        expires = "; expires=" + date.toGMTString();
     }
     else {
         expires = "";
@@ -95,7 +95,7 @@ Form.prototype.ajaxifySubmit = function(responseHandler, before) {
     var formElmt = self.formElmt;
     var url = formElmt.action;
     $(self.formElmt).submit(function(event){
-        var params = $(self.formElmt).serialize();
+        var params = $(formElmt).serialize();
         var $fields = $(formElmt).find("input, button");
         $fields.attr("disabled", true);
         ajaxJSON(url, params, function(response){
@@ -389,11 +389,13 @@ function Table(AppTools){
         var requestMonths = currentMonthParams();
         var showPeriodSuccessHandler = showSuccessConstructor.bind(undefined, requestMonths);
         var formHandler = AppTools.formHandler(showPeriodSuccessHandler, dataLoading);
-        ajaxJSON("get_proxy.php", requestMonths, formHandler, dataLoading);
-        // configure the transactions display table
-        $(showAllButtonELmt).on("click", showAllButtonBehavior);
         // set handler for form submission that fetches user transactions
         form.ajaxifySubmit(formHandler);
+        // configure the transactions display table
+        $(showAllButtonELmt).on("click", showAllButtonBehavior);
+        // on initial page load, get this month's transactions and display them
+        ajaxJSON("get_proxy.php", requestMonths, formHandler, dataLoading);
+
     }
     return {
         config: configTable,
