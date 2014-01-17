@@ -213,6 +213,7 @@ function AppTools(){
         var buttons = document.getElementById("buttons");
         buttons.classList.toggle("hide");
         formElmt.classList.toggle("hide");
+        formElmt.reset();
     }
     function fadeOutElmt(elmt, mils){
         elmt.classList.toggle("fade_hide");
