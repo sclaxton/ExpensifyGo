@@ -365,8 +365,8 @@ function Table(AppTools){
         if (transactions.length < 1) {
             var message = "No transactions to show.";
             if (dates){
-                var startDate = readifyUTCDate(dates.startDate);
-                var endDate = readifyUTCDate(dates.endDate);
+                var startDate = AppTools.readifyUTCDate(dates.startDate);
+                var endDate = AppTools.readifyUTCDate(dates.endDate);
                 message = "No transactions in the period " + startDate + " – " + endDate + ".";
             }
             insertTableMessage(message);
