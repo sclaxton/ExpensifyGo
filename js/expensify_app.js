@@ -76,6 +76,16 @@ function deleteCookie(cookie_name) {
     createCookie(cookie_name, "", -1);
 }
 
+function queryStringToJSON(qs) {
+    var pairs = qs.split('&');
+    var result = {};
+    pairs.forEach(function(pair) {
+        pair = pair.split('=');
+        result[pair[0]] = decodeURIComponent(pair[1] || '');
+    });
+    return JSON.parse(JSON.stringify(result));
+}
+
 
 /////////////////////////////////////////////////
 // Classes //////////////////////////////////////
@@ -96,12 +106,14 @@ Form.prototype.ajaxifySubmit = function(responseHandler, before) {
     var url = formElmt.action;
     $(self.formElmt).submit(function(event){
         var params = $(formElmt).serialize();
+        console.log(params);
         var $fields = $(formElmt).find("input, button");
         $fields.attr("disabled", true);
-        ajaxJSON(url, params, function(response){
+        ajaxJSON(url, params, function(data){
             formElmt.reset();
             $fields.attr("disabled", false);
-            responseHandler(response);
+            var paramsObject = queryStringToJSON(params);
+            responseHandler(paramsObject, data);
         }, before);
         return false;
     });
@@ -200,9 +212,9 @@ function AppTools(){
     //          errorElmt -- inline DOM element to display error
     //              messages to
     function expensifyFormHandler(successCallback, errorElmt){
-        return function(data){
+        return function(params, data){
             if (data.jsonCode == "200"){
-                successCallback(data);
+                successCallback(params, data);
             }
             else {
                 errorCodeHandlers[data.jsonCode](data, errorElmt);
@@ -358,23 +370,23 @@ function Table(AppTools){
     // Parameters:
     //      response -- object populated with transaction
     //          objects
-    function showSuccessConstructor(dates, response){
+    function showSuccessConstructor(params, response){
         var transactions = response.transactionList;
         console.log(transactions);
         clearTable();
         if (transactions.length < 1) {
             var message = "No transactions to show.";
-            if (dates){
-                var startDate = AppTools.readifyUTCDate(dates.startDate);
-                var endDate = AppTools.readifyUTCDate(dates.endDate);
+            console.log(params);
+            if (params.startDate && params.endDate){
+                var startDate = AppTools.readifyUTCDate(params.startDate);
+                var endDate = AppTools.readifyUTCDate(params.endDate);
                 message = "No transactions in the period " + startDate + " – " + endDate + ".";
             }
-            insertTableMessage(message);
+            insertTableMessage("<p>" + message + "</p>");
         }
         transactions.forEach(addTransaction.bind(undefined, bodyElmt));
     }
-    var showAllSuccessHandler = showSuccessConstructor.bind(undefined, null);
-    var showAllHandler = AppTools.formHandler(showAllSuccessHandler);
+    var showAllHandler = AppTools.formHandler(showSuccessConstructor);
     var showAllParams = { command: "Get", returnValueList: "transactionList" };
     // binds handler to click event on showAll button
     function showAllButtonBehavior(){
@@ -387,15 +399,15 @@ function Table(AppTools){
             AppTools.cancelAddButtonBehavior(formElmt);
         });
         // show the current month's transactions
-        var requestMonths = currentMonthParams();
-        var showPeriodSuccessHandler = showSuccessConstructor.bind(undefined, requestMonths);
-        var formHandler = AppTools.formHandler(showPeriodSuccessHandler, dataLoading);
+        var formHandler = AppTools.formHandler(showSuccessConstructor);
         // set handler for form submission that fetches user transactions
-        form.ajaxifySubmit(formHandler);
+        form.ajaxifySubmit(formHandler, dataLoading);
         // configure the transactions display table
         $(showAllButtonELmt).on("click", showAllButtonBehavior);
+        var currentMonth = currentMonthParams();
+        var currentMonthHandler = formHandler.bind(undefined, currentMonth);
         // on initial page load, get this month's transactions and display them
-        ajaxJSON("get_proxy.php", requestMonths, formHandler, dataLoading);
+        ajaxJSON("get_proxy.php", currentMonth, currentMonthHandler, dataLoading);
 
     }
     return {
@@ -412,7 +424,7 @@ function  Adder(AppTools){
     var cancelButtonElmt = document.getElementById("cancel_add");
     var form = new Form(formElmt);
     var userFeedbackElmt = document.getElementById("add_message");
-    function addSuccessHandler(response){
+    function addSuccessHandler(params, response){
         AppTools.fadeOutElmt(userFeedbackElmt, 3000);
         console.log("transaction added");
     }
@@ -459,7 +471,7 @@ function Login(Transactions, NavBar, AppTools){
     var formElmt = document.getElementById("login_form");
     var messageElmt  = document.getElementById("message");
     var form = new Form(formElmt);
-    function loginSuccessHandler(response) {
+    function loginSuccessHandler(params, response) {
         $(containerElmt).remove();
         var email;
         if(response){

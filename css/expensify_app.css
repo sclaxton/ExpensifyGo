@@ -260,7 +260,7 @@ input {
 
 #message_row td div {
     position: absolute;
-    height: 100% !important;
+    height: 75% !important;
     width: 100% !important;
     display: table;
 }
