@@ -45,7 +45,7 @@ function createCookie(cookie_name, value, hours) {
 // function gets the value of a cookie if it exists
 // otherwise return null
 // Parameters:
-//      cookie_name -- name of the cookie to be deleted
+//      cookie_name -- name of the cookie to get value of
 function getCookieValue(cookie_name) {
     // add '=' so we get the value when we
     // find the cookies
