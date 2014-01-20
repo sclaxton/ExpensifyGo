@@ -386,7 +386,7 @@ function Table(AppTools){
         }
         transactions.forEach(addTransaction.bind(undefined, bodyElmt));
     }
-    var showAllHandler = AppTools.formHandler(showSuccessConstructor);
+    var showAllHandler = AppTools.formHandler(showSuccessConstructor).bind(undefined, null);
     var showAllParams = { command: "Get", returnValueList: "transactionList" };
     // binds handler to click event on showAll button
     function showAllButtonBehavior(){
